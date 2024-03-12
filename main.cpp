@@ -35,10 +35,12 @@ float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
+// viewing frustum
 float lef = -1.0f, rig = 1.0f;
 float bottom = -0.75f, top = 0.75f;
 float near = 0.1f, far = 100.0f;
 
+// map border
 float leftBorder = -6.4f, rightBorder = 6.4f;
 float bottomBorder = -3.2f, topBorder = 3.2f;
 
@@ -103,7 +105,7 @@ int main()
     glEnable(GL_PROGRAM_POINT_SIZE);
     stbi_set_flip_vertically_on_load(true);
     float mapVertices[] = {
-        // positions          // colors           // texture coords
+        // positions          // colors           
          6.4f,  3.2f, -1.0f,   1.0f, 1.0f, // top right
          6.4f, -3.2f, -1.0f,   1.0f, 0.0f, // bottom right
         -6.4f, -3.2f, -1.0f,   0.0f, 0.0f, // bottom left
@@ -164,6 +166,8 @@ int main()
     stbi_image_free(mapData);
 
 
+    // Open multiple threads to parse data
+    // -------------------------------------------------------------------------------
     Data data;
     for (int i = 0; i < 5; i++) {
         data.getDataAsyc();
@@ -175,6 +179,8 @@ int main()
     float currentSec = 0.0f;
     int fps = 0;
     
+    // Get the point positions of the first and second seconds
+    // -------------------------------------------------------------------------------
     DataChunk currentChunk = data.getDataChunk();
     DataChunk nextChunk = data.getDataChunk();
     //cout << currentChunk.indices.size() << "cur " << currentChunk.vertices.size() << endl;
@@ -192,8 +198,10 @@ int main()
         lastFrame = currentFrame;
         
 
-
         currentDelta += deltaTime;
+
+        // Get the point position of the next second
+        // -------------------------------------------------------------------------------
         if (currentDelta > 1.0f) {
             currentChunk = nextChunk;
             nextChunk = data.getDataChunk();
@@ -204,6 +212,8 @@ int main()
 
         //cout << nextChunk.indices.size() << " " << nextChunk.vertices.size() << endl;
 
+        // Interpolate according to time based on the point position of the previous second and the next second
+        // -------------------------------------------------------------------------------
         vector<Vertex> vertices;
         for (int i = 0; i < currentChunk.vertices.size(); i++) {
             vertices.push_back(calVertex(currentChunk.vertices[i], nextChunk.vertices[i], currentDelta));
@@ -222,7 +232,8 @@ int main()
         // bind textures on corresponding texture units
         glBindTexture(GL_TEXTURE_2D, texture);
 
-        //draw map
+        // draw map
+        // -------------------------------------------------------------------------------
         mapShader.use();
 
         //lef = -1.0f, rig = 1.0f;
@@ -252,19 +263,11 @@ int main()
         ourShader.setMat4("view", view);
         ourShader.setMat4("model", model);
 
-        float time1 = static_cast<float>(glfwGetTime());
 
         
-        //draw points
-        float time2 = static_cast<float>(glfwGetTime());
-
-
-
-
-        time1 = static_cast<float>(glfwGetTime());
-
-
-
+        // draw points
+        // -------------------------------------------------------------------------------
+        float time1 = static_cast<float>(glfwGetTime());
         glBindVertexArray(VAO[1]);
         glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_DYNAMIC_DRAW);    
@@ -280,10 +283,11 @@ int main()
        
         glDrawArrays(GL_POINTS, 0, vertices.size());
 
-        time2 = static_cast<float>(glfwGetTime());
+        float time2 = static_cast<float>(glfwGetTime());
         //cout << "draw points time : " << time2 - time1 << endl;
 
-
+        // draw lines
+        // -------------------------------------------------------------------------------
         glDrawElements(GL_LINES, indexLines.size(), GL_UNSIGNED_INT, 0);
 
         

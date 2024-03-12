@@ -66,10 +66,10 @@ public:
 
 			std::string fileName = "../../../data1/unit_info_" + std::to_string(this->index) + ".json";
 			//std::string fileName = "../../../data1/unit_info_1.json";
-			Json::Reader reader;/*ÓÃÓÚ°´ÕÕJSONÊı¾İ¸ñÊ½½øĞĞ½âÎö*/
-			Json::Value root;/*ÓÃÓÚ±£´æJSONÀàĞÍµÄÒ»¶ÎÊı¾İ*/
-			ifstream srcFile(fileName, ios::binary);/*¶¨ÒåÒ»¸öifstreamÁ÷¶ÔÏó£¬ÓëÎÄ¼şdemo.json½øĞĞ¹ØÁª*/
-			//char* buffer; //Ò²¿ÉÒÔ½«buffer×÷ÎªÊä³ö²ÎÊı
+			Json::Reader reader;/*ï¿½ï¿½ï¿½Ú°ï¿½ï¿½ï¿½JSONï¿½ï¿½ï¿½İ¸ï¿½Ê½ï¿½ï¿½ï¿½Ğ½ï¿½ï¿½ï¿½*/
+			Json::Value root;/*ï¿½ï¿½ï¿½Ú±ï¿½ï¿½ï¿½JSONï¿½ï¿½ï¿½Íµï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
+			ifstream srcFile(fileName, ios::binary);/*ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ifstreamï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½demo.jsonï¿½ï¿½ï¿½Ğ¹ï¿½ï¿½ï¿½*/
+			//char* buffer; //Ò²ï¿½ï¿½ï¿½Ô½ï¿½bufferï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			//if ((buffer = getcwd(NULL, 0)) == NULL)
 			//{
 			//	perror("getcwd error");
@@ -92,7 +92,7 @@ public:
 
 			}
 			//vector<float> tmpVertices;
-			/*½«demo.jsonÊı¾İ½âÎöµ½¸ù½Úµãroot*/
+			/*ï¿½ï¿½demo.jsonï¿½ï¿½ï¿½İ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½root*/
 
 			float time1 = static_cast<float>(glfwGetTime());
 			float time2 = 0.0f;
