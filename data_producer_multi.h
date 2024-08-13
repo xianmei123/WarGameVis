@@ -16,6 +16,7 @@
 #include <queue>
 #include <condition_variable>
 #include <map>
+#include <GLFW/glfw3.h>
 
 using namespace std;
 
@@ -25,6 +26,11 @@ struct Vertex {
 	glm::vec3 position;
 	// normal
 	glm::vec3 color;
+
+	int status;
+	int camps;
+	int padding;
+
 
 	Vertex(const glm::vec3& position, const glm::vec3& color)
 		: position(position), color(color) {}
@@ -192,6 +198,14 @@ public:
 		dataMap.erase(readIndex);
 		readIndex = (readIndex + 1) % 50;
 		full.notify_one();
+
+		return chunk;
+
+	}
+
+	DataChunk getDataChunk(int seconds) {
+		DataChunk chunk;
+		//to do
 
 		return chunk;
 
