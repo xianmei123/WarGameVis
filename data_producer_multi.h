@@ -19,6 +19,7 @@
 
 using namespace std;
 
+// Point
 struct Vertex {
 	// position
 	glm::vec3 position;
@@ -29,6 +30,7 @@ struct Vertex {
 		: position(position), color(color) {}
 };
 
+// Line
 struct Line {
 
 	Vertex vertex1;
@@ -39,43 +41,44 @@ struct Line {
 		: vertex1(vertex1), vertex2(vertex2) {}
 };
 
+// Point and line
 struct DataChunk {
 	vector<Vertex> vertices;
 	vector<int> indices;
 };
 
-
+// Data Parser
 class Data {
 private:
 	
-	int index = 0;
-	int readIndex = 0;
-	queue<DataChunk> dataQueue;
-	mutex queueMutex;
-	mutex indexMutex;
+	int index = 0; //file parse index
+	int readIndex = 0; // data get index
+	queue<DataChunk> dataQueue; 
+	mutex queueMutex; // dataMap mutex
+	mutex indexMutex; // index mutex
 	const int QUEUE_MAX_SIZE = 5;
 	condition_variable full;
 	condition_variable empty;
-	map<int, DataChunk> dataMap;
+	map<int, DataChunk> dataMap; //data map, size = QUEUE_MAX_SIZE
 public:
+	// Parse data from json file
 	void readDataFromJson()
 	{
 		while (true) {
 			vector<Vertex> vertices;
 			vector<int> indices;
-			/*std::string prefix = "../../../data/unit_info_";*/
 			
 			unique_lock<std::mutex> indexlock(indexMutex);
 			int localIndex = this->index;
 			this->index = (index + 1) % 50;
-			
 			std::string fileName = "../../../data1/unit_info_" + std::to_string(localIndex) + ".json";
 			indexlock.unlock();
-			//std::string fileName = "../../../data1/unit_info_1.json";
-			Json::Reader reader;/*用于按照JSON数据格式进行解析*/
-			Json::Value root;/*用于保存JSON类型的一段数据*/
-			ifstream srcFile(fileName, ios::binary);/*定义一个ifstream流对象，与文件demo.json进行关联*/
-			//char* buffer; //也可以将buffer作为输出参数
+			
+			// parse json
+			Json::Reader reader;
+			Json::Value root;
+			ifstream srcFile(fileName, ios::binary);
+			//char* buffer; 
 			//if ((buffer = getcwd(NULL, 0)) == NULL)
 			//{
 			//	perror("getcwd error");
@@ -98,7 +101,7 @@ public:
 
 			}
 			//vector<float> tmpVertices;
-			/*将demo.json数据解析到根节点root*/
+			
 
 			float time1 = static_cast<float>(glfwGetTime());
 			float time2 = 0.0f;
@@ -142,10 +145,12 @@ public:
 
 			}
 			srcFile.close();
+
 			DataChunk chunk;
 			chunk.vertices = vertices;
 			chunk.indices = indices;
 			
+			// insert dataChunk to datamap
 			unique_lock<std::mutex> lock(queueMutex);
 			/*full.wait(lock, [this] {
 				if (dataMap.size() >= QUEUE_MAX_SIZE) {
@@ -170,7 +175,7 @@ public:
 		
 
 
-
+	// get data from dataMap and notify it to parse json file
 	DataChunk getDataChunk() {
 		DataChunk chunk;
 		unique_lock<std::mutex> lock(queueMutex);
@@ -191,6 +196,7 @@ public:
 		return chunk;
 
 	}
+	
 	
 	void getDataAsyc() {
 		std::thread dataThread(&Data::readDataFromJson, this);

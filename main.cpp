@@ -26,8 +26,8 @@ void processInput(GLFWwindow* window);
 Vertex calVertex(Vertex v1, Vertex v2, float p);
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1280;
+const unsigned int SCR_HEIGHT = 659;
 
 // camera
 OrthoCamera camera(glm::vec3(0.0f, 0.0f, 2.0f));
@@ -35,12 +35,19 @@ float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
+// viewing frustum
 float lef = -1.0f, rig = 1.0f;
 float bottom = -0.75f, top = 0.75f;
 float near = 0.1f, far = 100.0f;
 
-float leftBorder = -6.4f, rightBorder = 6.4f;
-float bottomBorder = -3.2f, topBorder = 3.2f;
+// map border
+//float leftBorder = -6.4f, rightBorder = 6.4f;
+//float bottomBorder = -3.2f, topBorder = 3.2f;
+
+float leftBorder = -12.8f, rightBorder = 12.8f;
+float bottomBorder = -6.59f, topBorder = 6.59f;
+
+float maxHeight = topBorder / 4.0f;
 
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -102,12 +109,20 @@ int main()
 
     glEnable(GL_PROGRAM_POINT_SIZE);
     stbi_set_flip_vertically_on_load(true);
+    //float mapVertices[] = {
+    //    // positions          // colors           
+    //     6.4f,  3.2f, -1.0f,   1.0f, 1.0f, // top right
+    //     6.4f, -3.2f, -1.0f,   1.0f, 0.0f, // bottom right
+    //    -6.4f, -3.2f, -1.0f,   0.0f, 0.0f, // bottom left
+    //    -6.4f,  3.2f, -1.0f,   0.0f, 1.0f  // top left 
+    //};
+
     float mapVertices[] = {
-        // positions          // colors           // texture coords
-         6.4f,  3.2f, -1.0f,   1.0f, 1.0f, // top right
-         6.4f, -3.2f, -1.0f,   1.0f, 0.0f, // bottom right
-        -6.4f, -3.2f, -1.0f,   0.0f, 0.0f, // bottom left
-        -6.4f,  3.2f, -1.0f,   0.0f, 1.0f  // top left 
+        // positions          // colors           
+         rightBorder,  topBorder, -1.0f,   1.0f, 1.0f, // top right
+         rightBorder, bottomBorder, -1.0f,   1.0f, 0.0f, // bottom right
+         leftBorder, bottomBorder, -1.0f,   0.0f, 0.0f, // bottom left
+         leftBorder, topBorder, -1.0f,   0.0f, 1.0f  // top left 
     };
     unsigned int indices[] = {
         0, 1, 3, // first triangle
@@ -116,7 +131,7 @@ int main()
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
-    
+
     unsigned int VBO[2], VAO[2], EBO[2];
     glGenVertexArrays(2, VAO);
     glGenBuffers(2, VBO);
@@ -136,7 +151,7 @@ int main()
     // color  attribute
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    
+
     // load and create a texture 
     // -------------------------
     unsigned int texture;
@@ -151,10 +166,12 @@ int main()
     // load image, create texture and generate mipmaps
     int width, height, nrChannels;
     // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    unsigned char* mapData = stbi_load("../../../resources/map.jpg", &width, &height, &nrChannels, 0);
+    //unsigned char* mapData = stbi_load("../../../resources/map.jpg", &width, &height, &nrChannels, 0);
+
+    unsigned char* mapData = stbi_load("../../../resources/newmap.png", &width, &height, &nrChannels, 0);
     if (mapData)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, mapData);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, mapData);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
@@ -164,17 +181,21 @@ int main()
     stbi_image_free(mapData);
 
 
+    // Open multiple threads to parse data
+    // -------------------------------------------------------------------------------
     Data data;
     for (int i = 0; i < 5; i++) {
         data.getDataAsyc();
     }
-    
+
 
     float oneSec = 0.0f;
     float lastSec = 0.0f;
     float currentSec = 0.0f;
     int fps = 0;
-    
+
+    // Get the point positions of the first and second seconds
+    // -------------------------------------------------------------------------------
     DataChunk currentChunk = data.getDataChunk();
     DataChunk nextChunk = data.getDataChunk();
     //cout << currentChunk.indices.size() << "cur " << currentChunk.vertices.size() << endl;
@@ -190,10 +211,12 @@ int main()
         deltaTime = currentFrame - lastFrame;
         //cout << deltaTime << endl;
         lastFrame = currentFrame;
-        
 
 
         currentDelta += deltaTime;
+
+        // Get the point position of the next second
+        // -------------------------------------------------------------------------------
         if (currentDelta > 1.0f) {
             currentChunk = nextChunk;
             nextChunk = data.getDataChunk();
@@ -204,6 +227,8 @@ int main()
 
         //cout << nextChunk.indices.size() << " " << nextChunk.vertices.size() << endl;
 
+        // Interpolate according to time based on the point position of the previous second and the next second
+        // -------------------------------------------------------------------------------
         vector<Vertex> vertices;
         for (int i = 0; i < currentChunk.vertices.size(); i++) {
             vertices.push_back(calVertex(currentChunk.vertices[i], nextChunk.vertices[i], currentDelta));
@@ -222,7 +247,8 @@ int main()
         // bind textures on corresponding texture units
         glBindTexture(GL_TEXTURE_2D, texture);
 
-        //draw map
+        // draw map
+        // -------------------------------------------------------------------------------
         mapShader.use();
 
         //lef = -1.0f, rig = 1.0f;
@@ -239,8 +265,8 @@ int main()
         mapShader.setMat4("projection", projection);
         mapShader.setMat4("view", view);
         mapShader.setMat4("model", model);
-        
-       
+
+
         glBindVertexArray(VAO[0]);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -252,44 +278,37 @@ int main()
         ourShader.setMat4("view", view);
         ourShader.setMat4("model", model);
 
+
+
+        // draw points
+        // -------------------------------------------------------------------------------
         float time1 = static_cast<float>(glfwGetTime());
-
-        
-        //draw points
-        float time2 = static_cast<float>(glfwGetTime());
-
-
-
-
-        time1 = static_cast<float>(glfwGetTime());
-
-
-
         glBindVertexArray(VAO[1]);
         glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_DYNAMIC_DRAW);    
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_DYNAMIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[1]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * indexLines.size(), &indexLines[0], GL_DYNAMIC_DRAW);
-   
+
         // position attribute
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
         glEnableVertexAttribArray(0);
         // color  attribute
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
         glEnableVertexAttribArray(1);
-       
+
         glDrawArrays(GL_POINTS, 0, vertices.size());
 
-        time2 = static_cast<float>(glfwGetTime());
+        float time2 = static_cast<float>(glfwGetTime());
         //cout << "draw points time : " << time2 - time1 << endl;
 
-
+        // draw lines
+        // -------------------------------------------------------------------------------
         glDrawElements(GL_LINES, indexLines.size(), GL_UNSIGNED_INT, 0);
 
-        
+
         time2 = static_cast<float>(glfwGetTime());
         //cout << "draw lines time : " << time2 - time1 << endl;
-   
+
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -364,18 +383,21 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{   
+{
     glm::vec3 Position = camera.getPosition();
     float posX = camera.getAbs(Position.x);
     float posY = camera.getAbs(Position.y);
-    //cout << "x : " << xoffset << "y : " << yoffset << endl;
+    cout << "x : " << xoffset << "y : " << yoffset << endl;
     if (yoffset < 0.f && (posX - yoffset * 0.1f + rig > rightBorder || posY - yoffset * 0.1f + top > topBorder)) {
         return;
     }
-    lef += yoffset * 0.1f;
-    rig -= yoffset * 0.1f;
-    top -= yoffset * 0.1f;
-    bottom += yoffset * 0.1f;
+    if (top - yoffset * topBorder * 0.01 >= maxHeight) return;
+    lef += yoffset * rightBorder * 0.01;
+    rig -= yoffset * rightBorder * 0.01;
+    top -= yoffset * topBorder * 0.01;
+    bottom += yoffset * topBorder * 0.01;
+
+    cout << "LEF : " << lef << "RIG : " << rig << endl;
     //camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
