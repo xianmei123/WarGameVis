@@ -34,6 +34,9 @@ struct Vertex {
 
 	Vertex(const glm::vec3& position, const glm::vec3& color)
 		: position(position), color(color) {}
+	Vertex()
+		: position(0.0f), color(0.0f), status(0), camps(0), padding(0) {}
+
 };
 
 // Line
@@ -49,8 +52,9 @@ struct Line {
 
 // Point and line
 struct DataChunk {
-	vector<Vertex> vertices;
-	vector<int> indices;
+	Vertex* vertices;
+	int* indices;
+	int unit_count;
 };
 
 // Data Parser
@@ -152,10 +156,23 @@ public:
 			}
 			srcFile.close();
 
-			DataChunk chunk;
+			/*DataChunk chunk;
 			chunk.vertices = vertices;
-			chunk.indices = indices;
-			
+			chunk.indices = indices;*/
+
+			DataChunk chunk;
+			chunk.unit_count = vertices.size();
+			chunk.vertices = new Vertex[chunk.unit_count];
+			chunk.indices = new int[indices.size()];
+
+			for (int i = 0; i < chunk.unit_count; i++) {
+				chunk.vertices[i] = vertices[i];
+			}
+
+			for (int i = 0; i < indices.size(); i++) {
+				chunk.indices[i] = indices[i];
+			}
+
 			// insert dataChunk to datamap
 			unique_lock<std::mutex> lock(queueMutex);
 			/*full.wait(lock, [this] {
@@ -171,7 +188,7 @@ public:
 				return true;
 				});
 			dataMap.insert(std::pair<int, DataChunk>(localIndex, chunk));
-			cout << "insert chunk indices : " << dataMap[localIndex].indices.size() << "chunk vertices : " << chunk.vertices.size() << " localIndex:"<<  localIndex << endl;
+			//cout << "insert chunk indices : " << dataMap[localIndex].indices.size() << "chunk vertices : " << chunk.vertices.size() << " localIndex:"<<  localIndex << endl;
 			cout << fileName << " size: " << dataMap.size() << endl;
 			empty.notify_one();
 			//queueMutex.unlock();
@@ -194,7 +211,7 @@ public:
 
 		cout << "readIndex : " << readIndex << "size: " << dataMap.size() << endl;
 		chunk = dataMap[readIndex];
-		cout << "get chunk indices : " << chunk.indices.size() << "chunk vertices : " << chunk.vertices.size() << endl;
+		//cout << "get chunk indices : " << chunk.indices.size() << "chunk vertices : " << chunk.vertices.size() << endl;
 		dataMap.erase(readIndex);
 		readIndex = (readIndex + 1) % 50;
 		full.notify_one();

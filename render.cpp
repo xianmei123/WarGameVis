@@ -249,11 +249,11 @@ void Render::render()
         // Interpolate according to time based on the point position of the previous second and the next second
         // -------------------------------------------------------------------------------
         vector<Vertex> vertices;
-        for (int i = 0; i < currentChunk.vertices.size(); i++) {
+        for (int i = 0; i < currentChunk.unit_count; i++) {
             vertices.push_back(calVertex(currentChunk.vertices[i], nextChunk.vertices[i], currentDelta));
         }
-        vector<int> indexLines = currentDelta < 0.5f ? currentChunk.indices : nextChunk.indices;
-
+        //vector<int> indexLines = currentDelta < 0.5f ? currentChunk.indices : nextChunk.indices;
+        vector<int> indexLines = currentDelta < 0.5f ? vector<int>(currentChunk.indices, currentChunk.indices + currentChunk.unit_count) : vector<int>(nextChunk.indices, nextChunk.indices + nextChunk.unit_count);
         // input
         // -----
         processInput(window);
